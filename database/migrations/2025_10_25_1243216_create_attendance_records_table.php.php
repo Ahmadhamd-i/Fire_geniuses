@@ -1,5 +1,4 @@
 <?php
-
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -12,12 +11,13 @@ return new class extends Migration
             $table->id();
             $table->foreignId('employee_id')->constrained('employees')->cascadeOnDelete();
             $table->string('department')->nullable();
-            $table->boolean('checked')->default(false);
+            $table->boolean('checked')->default(false); // indicates if checked-in
             $table->timestamp('check_in')->nullable();
             $table->timestamp('check_out')->nullable();
-            $table->decimal('total_hours', 8, 2)->nullable();
-            $table->string('check_in_source')->nullable(); // mobile/web/biometric
-            $table->string('check_in_location')->nullable(); // optional address or lat,lng
+            $table->decimal('total_hours', 8, 2)->nullable(); // total worked hours
+            $table->decimal('overtime', 8, 2)->nullable(); // daily overtime
+            $table->string('check_in_source')->nullable(); // e.g., mobile, web, biometric
+            $table->string('check_in_location')->nullable(); // optional, lat/lng or address
             $table->timestamps();
             $table->softDeletes();
         });

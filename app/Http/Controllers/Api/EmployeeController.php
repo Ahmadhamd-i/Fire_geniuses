@@ -6,11 +6,12 @@ use App\Helper\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Models\Employee;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
 
-class EmployeeAuthController extends Controller
+class EmployeeController extends Controller
 {
     // Register employee
     public function register(Request $request)
@@ -21,6 +22,7 @@ class EmployeeAuthController extends Controller
             'email' => 'required|email|unique:employees,email',
             'password' => 'required|string|min:6|confirmed',
             'phone' => 'nullable|string',
+            'start_work_date' => Carbon::now(),
         ]);
 
         if ($validator->fails()) {
@@ -95,26 +97,71 @@ class EmployeeAuthController extends Controller
             return ApiResponse::SendResponse(400, $validator->errors(), '');
         }
 
-        // Update other fields first
         $employee->update($request->except('image'));
 
-        // Handle image upload
+        // ✅ Handle image upload
         if ($request->hasFile('image')) {
+
             // Delete old image if exists
             if ($employee->image) {
-                $oldPath = str_replace(asset('storage') . '/', '', $employee->image);
+                $oldPath = str_replace(url('storage') . '/', '', $employee->image);
                 Storage::disk('public')->delete($oldPath);
             }
 
-            // Store new image in employee_images folder
+            // Store new image in `storage/app/public/employee_images`
             $imagePath = $request->file('image')->store('employee_images', 'public');
-            $employee->image = asset('storage/' . $imagePath);
+
+            // ✅ Generate the correct absolute URL
+            $employee->image = url('storage/' . str_replace('public/', '', $imagePath));
         }
 
         $employee->save();
 
         return ApiResponse::SendResponse(200, 'Profile updated successfully', $employee);
     }
+
+    //create employee by admin
+    public function createByAdmin(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'nullable|string|max:255',
+            'address' => 'nullable|string|max:255',
+            'nationality' => 'nullable|string|max:255',
+            'iqama_number' => 'nullable|string|max:255',
+            'iqama_expiry_date' => 'nullable|date',
+            'job_title' => 'nullable|string|max:255',
+            'salary' => 'nullable|string|max:255',
+            'department' => 'nullable|string|max:255',
+            'start_work_date' => 'nullable|date',
+            'email' => 'required|email|unique:employees,email',
+            'password' => 'required|string|min:6|confirmed',
+            'phone' => 'nullable|string|max:20',
+            'emer_phone_name' => 'nullable|string|max:255',
+            'emergency_Phone' => 'nullable|string|max:20',
+            'status' => 'nullable|in:active,inactive',
+            'image' => 'nullable|image|max:4096', // up to 4MB
+        ]);
+
+        if ($validator->fails()) {
+            return ApiResponse::SendResponse(400, $validator->errors(), '');
+        }
+
+        // Prepare employee data
+        $data = $request->except('image');
+        $data['password'] = Hash::make($request->password);
+
+        // Handle image upload
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('employee_images', 'public');
+            $data['image'] = asset('storage/' . $imagePath);
+        }
+
+        $employee = Employee::create($data);
+
+        return ApiResponse::SendResponse(201, 'Employee created successfully by admin', $employee);
+    }
+
 
     // Logout employee
     public function logout(Request $request)

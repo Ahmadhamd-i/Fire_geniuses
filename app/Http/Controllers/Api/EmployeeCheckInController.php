@@ -42,6 +42,7 @@ class EmployeeCheckInController extends Controller
             'check_in' => now(),
             'check_in_source' => $request->check_in_source,
             'check_in_location' => $request->check_in_location,
+            'total_overtime' => $employee->total_overtime ?? 0, // initialize overtime
         ]);
 
         return ApiResponse::SendResponse(200, 'Checked in successfully', $attendance);
@@ -61,12 +62,38 @@ class EmployeeCheckInController extends Controller
         }
 
         $attendance->check_out = now();
-        $attendance->total_hours = round(Carbon::parse($attendance->check_out)
-                ->diffInMinutes(Carbon::parse($attendance->check_in)) / 60, 2);
+
+        // Calculate total hours worked
+        $hoursWorked = Carbon::parse($attendance->check_out)
+                ->diffInMinutes(Carbon::parse($attendance->check_in)) / 60;
+
+        $attendance->total_hours = round($hoursWorked, 2);
+
+        // Calculate daily overtime (hours beyond 8)
+        $dailyOvertime = $hoursWorked > 8 ? $hoursWorked - 8 : 0;
+
+        // Store daily overtime in attendance
+        $attendance->overtime = round($dailyOvertime, 2);
         $attendance->save();
+
+        // Update or create cumulative overtime in salary structure, linked to employee_id
+        $salaryStructure = $employee->salaryStructure()->first();
+
+        if (!$salaryStructure) {
+            // Create salary structure for this employee with cumulative overtime
+            $salaryStructure = $employee->salaryStructure()->create([
+                'employee_id' => $employee->id,
+                'basic_salary' => 0,
+                'cumulative_overtime' => $dailyOvertime,
+            ]);
+        } else {
+            $salaryStructure->cumulative_overtime = ($salaryStructure->cumulative_overtime ?? 0) + $dailyOvertime;
+            $salaryStructure->save();
+        }
 
         return ApiResponse::SendResponse(200, 'Checked out successfully', $attendance);
     }
+
 
     // Get employee attendance records
     public function myAttendance(Request $request)

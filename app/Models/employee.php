@@ -33,4 +33,9 @@ class Employee extends Authenticatable
             ->distinct()
             ->count('work_date');
     }
+    public function salaryStructure()
+    {
+        return $this->hasOne(SalaryStructure::class);
+    }
+
 }

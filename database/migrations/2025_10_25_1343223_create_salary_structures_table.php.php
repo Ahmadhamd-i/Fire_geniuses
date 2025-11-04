@@ -14,6 +14,7 @@ return new class extends Migration
             $table->decimal('basic_salary', 15, 2)->default(0);
             $table->json('allowances')->nullable(); // e.g. [{ "type": "housing", "amount": 500 }]
             $table->decimal('overtime_rate', 10, 2)->nullable(); // per hour
+            $table->decimal('cumulative_overtime', 8, 2)->default(0); // total overtime hours
             $table->json('deductions')->nullable(); // e.g. [{"type":"loan","amount":100}]
             $table->string('salary_period')->default('monthly'); // monthly/biweekly etc.
             $table->timestamps();
