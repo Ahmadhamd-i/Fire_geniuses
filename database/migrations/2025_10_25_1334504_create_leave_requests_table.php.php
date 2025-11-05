@@ -16,7 +16,7 @@ return new class extends Migration
             $table->enum('leave_type', ['annual', 'sick', 'unpaid', 'maternity', 'other'])->default('annual');
             $table->text('reason')->nullable();
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
-            $table->foreignId('approved_by')->nullable()->constrained('users')->nullOnDelete(); // admin user
+            $table->foreignId('approved_by')->nullable()->constrained('admins')->nullOnDelete(); // admin user
             $table->text('rejection_reason')->nullable();
             $table->json('attachments')->nullable();
             $table->timestamps();

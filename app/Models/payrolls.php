@@ -10,17 +10,16 @@ class Payroll extends Model
 {
     use HasFactory, SoftDeletes;
 
-    // Table name is inferred as 'payrolls', so no need to declare $table
-
     protected $fillable = [
         'employee_id',
         'period_start',
         'period_end',
         'basic_salary',
         'gross_pay',
-        'allowances',
-        'deductions',
         'net_pay',
+        'previous_balance',
+        'paid_amount',
+        'remaining_balance',
         'is_paid',
         'paid_at',
         'payment_method',
@@ -28,27 +27,23 @@ class Payroll extends Model
     ];
 
     protected $casts = [
-        'period_start' => 'date',
-        'period_end' => 'date',
-        'basic_salary' => 'decimal:2',
         'gross_pay' => 'decimal:2',
         'net_pay' => 'decimal:2',
-        'allowances' => 'array',
-        'deductions' => 'array',
+        'previous_balance' => 'decimal:2',
+        'paid_amount' => 'decimal:2',
+        'remaining_balance' => 'decimal:2',
         'is_paid' => 'boolean',
-        'paid_at' => 'datetime',
         'meta' => 'array',
+        'period_start' => 'date',
+        'period_end' => 'date',
     ];
 
-    /*
-     |--------------------------------------------------------------------------
-     | Relationships
-     |--------------------------------------------------------------------------
-     */
-
-    // Payroll belongs to an employee
     public function employee()
     {
         return $this->belongsTo(Employee::class);
+    }
+    public function payments()
+    {
+        return $this->hasMany(PayrollPayment::class);
     }
 }

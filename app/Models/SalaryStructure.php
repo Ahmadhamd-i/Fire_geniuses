@@ -15,17 +15,17 @@ class SalaryStructure extends Model
         'basic_salary',
         'allowances',
         'overtime_rate',
-        'cumulative_overtime', // new field
+        'cumulative_overtime',
         'deductions',
         'salary_period',
     ];
 
     protected $casts = [
         'basic_salary' => 'decimal:2',
-        'allowances' => 'array',
+        'allowances' => 'decimal:2',
         'overtime_rate' => 'decimal:2',
-        'cumulative_overtime' => 'decimal:2', // cast as decimal
-        'deductions' => 'array',
+        'cumulative_overtime' => 'decimal:2',
+        'deductions' => 'decimal:2',
     ];
 
     public function employee()

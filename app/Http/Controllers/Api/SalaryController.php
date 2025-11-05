@@ -16,10 +16,10 @@ class SalaryController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'employee_id' => 'required|exists:employees,id',
-            'basic_salary' => 'required|numeric|min:0',
-            'allowances' => 'nullable|array',
-            'overtime_rate' => 'nullable|numeric|min:0',
-            'deductions' => 'nullable|array',
+            'basic_salary' => 'required|numeric',
+            'allowances' => 'nullable|numeric',
+            'overtime_rate' => 'nullable|numeric',
+            'deductions' => 'nullable|numeric',
             'salary_period' => 'nullable|string|in:monthly,biweekly,weekly',
         ]);
 
@@ -30,21 +30,22 @@ class SalaryController extends Controller
         $salary = SalaryStructure::updateOrCreate(
             ['employee_id' => $request->employee_id],
             [
-                'basic_salary' => $request->basic_salary,
-                'allowances' => $request->allowances,
-                'overtime_rate' => $request->overtime_rate,
-                'deductions' => $request->deductions,
+                'basic_salary' => (float)$request->basic_salary,
+                'allowances' => $request->allowances ? (float)$request->allowances : null,
+                'overtime_rate' => $request->overtime_rate ? (float)$request->overtime_rate : null,
+                'deductions' => $request->deductions ? (float)$request->deductions : null,
                 'salary_period' => $request->salary_period ?? 'monthly',
             ]
         );
 
         // Update the salary field in employees table
         $employee = Employee::find($request->employee_id);
-        $employee->salary = $request->basic_salary;
+        $employee->salary = (float)$request->basic_salary;
         $employee->save();
 
         return ApiResponse::SendResponse(200, 'Salary structure saved successfully', $salary);
     }
+
 
     // Update salary structure
     public function updateSalary(Request $request, $employeeId)
@@ -57,9 +58,9 @@ class SalaryController extends Controller
 
         $validator = Validator::make($request->all(), [
             'basic_salary' => 'nullable|numeric|min:0',
-            'allowances' => 'nullable|array',
+            'allowances' => 'nullable|numeric|min:0',
             'overtime_rate' => 'nullable|numeric|min:0',
-            'deductions' => 'nullable|array',
+            'deductions' => 'nullable|numeric|min:0',
             'salary_period' => 'nullable|string|in:monthly,biweekly,weekly',
         ]);
 
@@ -67,17 +68,33 @@ class SalaryController extends Controller
             return ApiResponse::SendResponse(400, $validator->errors(), '');
         }
 
-        $salary->update($request->only(['basic_salary', 'allowances', 'overtime_rate', 'deductions', 'salary_period']));
+        // Explicitly cast all decimal fields to float
+        $updateData = [];
+        if ($request->has('basic_salary')) $updateData['basic_salary'] = (float)$request->basic_salary;
+        if ($request->has('allowances')) $updateData['allowances'] = (float)$request->allowances;
+        if ($request->has('overtime_rate')) $updateData['overtime_rate'] = (float)$request->overtime_rate;
+        if ($request->has('deductions')) $updateData['deductions'] = (float)$request->deductions;
+        if ($request->has('salary_period')) $updateData['salary_period'] = $request->salary_period;
 
-        // Update the salary field in employees table if basic_salary is provided
-        if ($request->has('basic_salary')) {
-            $employee = Employee::find($employeeId);
-            $employee->salary = $request->basic_salary;
-            $employee->save();
+        if (empty($updateData)) {
+            return ApiResponse::SendResponse(400, 'No valid fields provided for update', '');
         }
 
-        return ApiResponse::SendResponse(200, 'Salary structure updated successfully', $salary);
+        // Update salary structure
+        $salary->update($updateData);
+
+        // Update employee's base salary if changed
+        if (isset($updateData['basic_salary'])) {
+            $employee = Employee::find($employeeId);
+            if ($employee) {
+                $employee->salary = $updateData['basic_salary'];
+                $employee->save();
+            }
+        }
+
+        return ApiResponse::SendResponse(200, 'Salary structure updated successfully', $salary->fresh());
     }
+
 
     // Optional: get salary structure for an employee
     public function getSalary($employeeId)

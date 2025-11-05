@@ -12,14 +12,14 @@ return new class extends Migration
     public function up()
     {
         Schema::table('employees', function (Blueprint $table) {
-            $table->decimal('total_overtime', 8, 2)->default(0)->after('salary');
+            $table->decimal('Vacation_available', 8, 2)->default(0)->after('salary');
         });
     }
 
     public function down()
     {
         Schema::table('employees', function (Blueprint $table) {
-            $table->dropColumn('total_overtime');
+            $table->dropColumn('Vacation_available');
         });
     }
 

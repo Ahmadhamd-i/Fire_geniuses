@@ -13,7 +13,12 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         // $schedule->command('inspire')->hourly();
+        $schedule->call(function () {
+            app(\App\Http\Controllers\Api\PayrollController::class)->generateMonthlyPayroll();
+        })->monthlyOn(1, '00:00'); // Run on 1st day of the month at 00:00
     }
+
+
 
     /**
      * Register the commands for the application.
