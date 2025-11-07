@@ -64,7 +64,7 @@ Route::prefix('employee')->group(function () {
         Route::get('payroll/{employeeId}', [PayrollController::class, 'employeePayrolls']);
     });
     Route::post('payroll/generate-monthly', [PayrollController::class, 'generateMonthlyPayroll']);
-//bla badvl
+//b
 });
 
 
